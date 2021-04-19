@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31129.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osuscoregatherer", "osuscoregatherer.csproj", "{548D1243-715A-4B11-A08F-BCD6C7999F3E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{548D1243-715A-4B11-A08F-BCD6C7999F3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{548D1243-715A-4B11-A08F-BCD6C7999F3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{548D1243-715A-4B11-A08F-BCD6C7999F3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{548D1243-715A-4B11-A08F-BCD6C7999F3E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D2E4B62A-26D3-452C-9C74-81F8E940D03F}
+	EndGlobalSection
+EndGlobal
