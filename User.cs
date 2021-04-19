@@ -6,7 +6,7 @@ namespace osuscoregatherer
 {
     public class User
     {
-        public static async System.Threading.Tasks.Task<User> InstantiateNewUserAsync(HttpClient httpClient, string user, string apikey)
+        public static async System.Threading.Tasks.Task<User> InstantiateUserAsync(HttpClient httpClient, string user, string apikey)
         {
             String responseString = await httpClient.GetStringAsync(httpClient.BaseAddress + "get_user?u=" + user + "&k=" + apikey);
             responseString = responseString.Substring(1, responseString.Length - 2);
