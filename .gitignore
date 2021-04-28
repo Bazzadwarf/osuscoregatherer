@@ -363,3 +363,6 @@ FodyWeavers.xsd
 
 # osu! api key text file
 *.apikey.txt
+
+# osu! beatmap files
+*.osz
