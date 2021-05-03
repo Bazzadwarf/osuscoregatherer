@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 
 namespace osuscoregatherer
@@ -35,24 +36,51 @@ namespace osuscoregatherer
 
             /////////////////////////////////////////////////////////
 
-            Scores s = await Scores.InstantiateScoreAsync(client, u.UserID.ToString(), 75, apikey);
-
-            s.PrintScoreInfo();
-
-            /////////////////////////////////////////////////////////
-
+            // Read in all of the files in folder
             var files = System.IO.Directory.GetFiles("C:\\Users\\Louis\\source\\repos\\osuscoregatherer\\beatmaps");
             string f;
-            
+
+            List<Beatmapset> Beatmapsets = new List<Beatmapset>();
+
+            // Create a list of all the beatmapsets to check
             foreach (var file in files)
             {
                 f = file.Remove(0, 54);
                 f = f.Split(' ')[0];
-                Console.WriteLine(f);
+                Beatmapset bs = await Beatmapset.InstantiateBeatmapsetAsync(client, apikey, int.Parse(f));
+                for (int i = 0; i < bs.Beatmaps.Count; i++)
+                {
+                    Console.WriteLine(bs.Beatmaps[i].BeatmapID + " " + bs.Artist + " - " + bs.Title + " (" + bs.Creator + ") [" + bs.Beatmaps[i].DiffName + "]");
+                }
+
+                Beatmapsets.Add(bs);
+                System.Threading.Thread.Sleep(50);
             }
 
-            Beatmapset bs = await Beatmapset.InstantiateBeatmapsetAsync(client, apikey, 163112);
-            Console.WriteLine(bs.Beatmaps[0].BeatmapID);
+            List<Score> Scores = new List<Score>();
+
+            // Get the ranked score for each user from each beatmap
+            foreach (var beatmapset in Beatmapsets)
+            {
+                foreach (var beatmap in beatmapset.Beatmaps)
+                {
+                    Console.Write("Currently checking " + beatmapset.Artist + " - " + beatmapset.Title + " (" + beatmapset.Creator + ") [" + beatmap.DiffName + "] ");
+
+                    Score s = await Score.InstantiateScoreAsync(client, u.UserID.ToString(), beatmap.BeatmapID, apikey);
+
+                    if (s.ScoreID > 0)
+                    {
+                        Console.WriteLine(u.Username + " " + s.ScoreID + " " + s.RankedScore + " " + s.Date.ToString());
+                        Scores.Add(s);
+                    }
+                    else
+                    {
+                        Console.WriteLine("No valid score");
+                    }
+
+                    System.Threading.Thread.Sleep(50);
+                }
+            }
         }
     }
 }

@@ -5,19 +5,28 @@ using Newtonsoft.Json.Linq;
 
 namespace osuscoregatherer
 {
-    class Scores
+    class Score
     {
-        public static async System.Threading.Tasks.Task<Scores> InstantiateScoreAsync(HttpClient httpClient, string user, int beatmapid, string apikey)
+        public static async System.Threading.Tasks.Task<Score> InstantiateScoreAsync(HttpClient httpClient, string user, int beatmapid, string apikey)
         {
             String responseString = await httpClient.GetStringAsync(httpClient.BaseAddress + "get_scores?u=" + user + "&b=" + beatmapid + "&k=" + apikey);
             //responseString = responseString.Substring(1, responseString.Length - 2);
 
-            return new Scores(responseString);
+            return new Score(responseString);
         }
 
-        public Scores(string json)
+        public Score(string json)
         {
-            ConvertJsonToData(JArray.Parse(json)[0]);
+            JArray array = JArray.Parse(json);
+
+            foreach (var item in array)
+            {
+                if (DateTime.Compare(DateTime.Parse((string)item["date"]), t2: new DateTime(2011, 01, 01)) < 0)
+                {
+                    ConvertJsonToData(item);
+                    return;                
+                }
+            }
         }
 
         private ulong score_id;
@@ -38,7 +47,7 @@ namespace osuscoregatherer
         private bool replay_available;
 
         public ulong ScoreID { get => score_id; set => score_id = value; }
-        public ulong Score { get => score; set => score = value; }
+        public ulong RankedScore { get => score; set => score = value; }
         public string Username { get => username; set => username = value; }
         public ulong Count300 { get => count300; set => count300 = value; }
         public ulong Count100 { get => count100; set => count100 = value; }
@@ -57,7 +66,7 @@ namespace osuscoregatherer
         private void ConvertJsonToData(JToken jObject)
         {
             ScoreID = (ulong)jObject["score_id"];
-            Score = (ulong)jObject["score"];
+            RankedScore = (ulong)jObject["score"];
             Username = (string)jObject["username"];
             Count300 = (ulong)jObject["count300"];
             Count100 = (ulong)jObject["count100"];
@@ -91,7 +100,7 @@ namespace osuscoregatherer
         public void PrintScoreInfo()
         {
             Console.WriteLine(ScoreID);
-            Console.WriteLine(Score);
+            Console.WriteLine(RankedScore);
             Console.WriteLine(Username);
             Console.WriteLine(Count300);
             Console.WriteLine(Count100);

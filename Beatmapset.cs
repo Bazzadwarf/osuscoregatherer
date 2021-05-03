@@ -51,6 +51,7 @@ namespace osuscoregatherer
 
         private ulong beatmapset_id;
         private ulong creator_id;
+        private string creator;
         private string artist;
         private string title;
 
@@ -59,11 +60,13 @@ namespace osuscoregatherer
         public string Artist { get => artist; set => artist = value; }
         public string Title { get => title; set => title = value; }
         public List<Beatmap> Beatmaps { get => beatmaps; set => beatmaps = value; }
+        public string Creator { get => creator; set => creator = value; }
 
         private void ExtractBeatmapsetInfo(JToken jToken)
         {
             BeatmapsetID = (ulong)jToken["beatmapset_id"];
             CreatorID = (ulong)jToken["creator_id"];
+            Creator = (string)jToken["creator"];
             Artist = (string)jToken["artist"];
             Title = (string)jToken["title"];
         }
@@ -75,7 +78,7 @@ namespace osuscoregatherer
         {
             Approved = (RankedStatus)(int)jToken["approved"];
             ApprovedDate = DateTime.Parse((string)jToken["approved_date"]);
-            BeatmapID = (ulong)jToken["beatmap_id"];
+            BeatmapID = (int)jToken["beatmap_id"];
             Bpm = (float)jToken["bpm"];
             DifficultyRating = (float)jToken["difficultyrating"];
             Mode = (GameMode)(int)jToken["mode"];
@@ -84,7 +87,7 @@ namespace osuscoregatherer
 
         private RankedStatus approved;
         private DateTime approved_date;
-        private ulong beatmap_id;
+        private int beatmap_id;
         private float bpm;
         private float difficultyrating;
         private GameMode mode;
@@ -92,7 +95,7 @@ namespace osuscoregatherer
 
         internal RankedStatus Approved { get => approved; set => approved = value; }
         public DateTime ApprovedDate { get => approved_date; set => approved_date = value; }
-        public ulong BeatmapID { get => beatmap_id; set => beatmap_id = value; }
+        public int BeatmapID { get => beatmap_id; set => beatmap_id = value; }
         public float Bpm { get => bpm; set => bpm = value; }
         public float DifficultyRating { get => difficultyrating; set => difficultyrating = value; }
         internal GameMode Mode { get => mode; set => mode = value; }
