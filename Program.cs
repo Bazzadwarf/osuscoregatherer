@@ -11,16 +11,31 @@ namespace osuscoregatherer
             
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("https://osu.ppy.sh/api/");
-            
-            /////////////////////////////////////////////////////////
 
-            User u = await User.InstantiateUserAsync(client, "baz", apikey);
+            /////////////////////////////////////////////////////////
+            
+            User u = null;
+            
+            while (u == null)
+            {
+                Console.Write("Insert User ID: ");
+                string UserID = Console.ReadLine();
+            
+                u = await User.InstantiateUserAsync(client, UserID, apikey);
+
+                Console.Write("Found user " + u.Username + ", is this correct? (y/n) ");
+
+                if (Console.ReadLine() != "y")
+                {
+                    u = null;
+                }
+            }
 
             u.PrintUserInfo();
 
             /////////////////////////////////////////////////////////
 
-            Scores s = await Scores.InstantiateScoreAsync(client, "baz", 75, apikey);
+            Scores s = await Scores.InstantiateScoreAsync(client, u.UserID.ToString(), 75, apikey);
 
             s.PrintScoreInfo();
 
