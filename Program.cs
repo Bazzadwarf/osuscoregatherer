@@ -1,5 +1,8 @@
-﻿using System;
+﻿using CsvHelper;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Net.Http;
 
 namespace osuscoregatherer
@@ -42,45 +45,72 @@ namespace osuscoregatherer
 
             List<Beatmapset> Beatmapsets = new List<Beatmapset>();
 
+            int curr = 1;
+
             // Create a list of all the beatmapsets to check
             foreach (var file in files)
-            {
+            {             
                 f = file.Remove(0, 54);
                 f = f.Split(' ')[0];
                 Beatmapset bs = await Beatmapset.InstantiateBeatmapsetAsync(client, apikey, int.Parse(f));
                 for (int i = 0; i < bs.Beatmaps.Count; i++)
                 {
-                    Console.WriteLine(bs.Beatmaps[i].BeatmapID + " " + bs.Artist + " - " + bs.Title + " (" + bs.Creator + ") [" + bs.Beatmaps[i].DiffName + "]");
+                    Console.WriteLine("(" + curr + "/" + files.Length + ") " + bs.Beatmaps[i].BeatmapID + " " + bs.Artist + " - " + bs.Title + " (" + bs.Creator + ") [" + bs.Beatmaps[i].DiffName + "]");
                 }
 
+                curr++;
+
                 Beatmapsets.Add(bs);
-                System.Threading.Thread.Sleep(50);
+                System.Threading.Thread.Sleep(10);
             }
 
             List<Score> Scores = new List<Score>();
 
+            curr = 1;
+
             // Get the ranked score for each user from each beatmap
             foreach (var beatmapset in Beatmapsets)
             {
+                Score highestScore = new Score();
+
                 foreach (var beatmap in beatmapset.Beatmaps)
                 {
-                    Console.Write("Currently checking " + beatmapset.Artist + " - " + beatmapset.Title + " (" + beatmapset.Creator + ") [" + beatmap.DiffName + "] ");
+                    if (beatmap.Approved != RankedStatus.Ranked || beatmap.Mode != GameMode.Osu)
+                    {
+                        continue;
+                    }
+                    
+                    Console.Write("Currently checking " + "(" + curr + "/" + files.Length + ") " + beatmapset.Artist + " - " + beatmapset.Title + " (" + beatmapset.Creator + ") [" + beatmap.DiffName + "] ");
 
                     Score s = await Score.InstantiateScoreAsync(client, u.UserID.ToString(), beatmap.BeatmapID, apikey);
 
-                    if (s.ScoreID > 0)
+                    if (s.ScoreID > 0 && s.RankedScore > highestScore.RankedScore)
                     {
                         Console.WriteLine(u.Username + " " + s.ScoreID + " " + s.RankedScore + " " + s.Date.ToString());
-                        Scores.Add(s);
+                        highestScore = s;
                     }
                     else
                     {
                         Console.WriteLine("No valid score");
                     }
 
-                    System.Threading.Thread.Sleep(50);
+                    System.Threading.Thread.Sleep(10);
                 }
+
+                if (highestScore.ScoreID > 0)
+                {
+                    Scores.Add(highestScore);
+                }
+
+                curr++;
             }
+
+            TextWriter textWriter = new StreamWriter(u.Username + ".csv");
+            var csv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
+
+            csv.WriteRecords(Scores);
+            csv.Flush();
+            textWriter.Close();
         }
     }
 }

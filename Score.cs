@@ -15,6 +15,11 @@ namespace osuscoregatherer
             return new Score(responseString);
         }
 
+        public Score()
+        {
+
+        }
+
         public Score(string json)
         {
             JArray array = JArray.Parse(json);
