@@ -26,7 +26,7 @@ namespace osuscoregatherer
 
             foreach (var item in array)
             {
-                if (DateTime.Compare(DateTime.Parse((string)item["date"]), t2: new DateTime(2011, 07, 01)) < 0)
+                if (DateTime.Compare(DateTime.Parse((string)item["date"]), t2: new DateTime(2012, 07, 25)) < 0)
                 {
                     ConvertJsonToData(item);
                     return;                
