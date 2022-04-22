@@ -1,12 +1,37 @@
 ﻿using CsvHelper;
+using CsvHelper.Configuration;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 
 namespace osuscoregatherer
 {
+    //public enum GameMode
+    //{
+    //    Osu = 0,
+    //    Taiko = 1,
+    //    CtB = 2,
+    //    Mania = 3
+    //}
+
+    public class bm
+    {
+        public int mapset { get; set; }
+        public int map { get; set; }
+        public int mode { get; set; }
+
+        //public bm(int ms, int mp, int md)
+        //{
+        //    mapset = ms;
+        //    map = mp;
+        //    mode = md;
+        //}
+    }
+
     class Program
     {
         static async System.Threading.Tasks.Task Main(string[] args)
@@ -17,14 +42,14 @@ namespace osuscoregatherer
             client.BaseAddress = new Uri("https://osu.ppy.sh/api/");
 
             /////////////////////////////////////////////////////////
-            
+
             User u = null;
-            
+
             while (u == null)
             {
                 Console.Write("Insert User ID: ");
                 string UserID = Console.ReadLine();
-            
+
                 u = await User.InstantiateUserAsync(client, UserID, apikey);
 
                 Console.Write("Found user " + u.Username + ", is this correct? (y/n) ");
@@ -39,77 +64,123 @@ namespace osuscoregatherer
 
             /////////////////////////////////////////////////////////
 
-            // Read in all of the files in folder
-            var files = System.IO.Directory.GetFiles("C:\\Users\\Louis\\source\\repos\\osuscoregatherer\\beatmaps");
-            string f;
+            int gameMode = -1;
 
-            List<Beatmapset> Beatmapsets = new List<Beatmapset>();
-
-            int curr = 1;
-
-            // Create a list of all the beatmapsets to check
-            foreach (var file in files)
-            {             
-                f = file.Remove(0, 54);
-                f = f.Split(' ')[0];
-                Beatmapset bs = await Beatmapset.InstantiateBeatmapsetAsync(client, apikey, int.Parse(f));
-                for (int i = 0; i < bs.Beatmaps.Count; i++)
-                {
-                    Console.WriteLine("(" + curr + "/" + files.Length + ") " + bs.Beatmaps[i].BeatmapID + " " + bs.Artist + " - " + bs.Title + " (" + bs.Creator + ") [" + bs.Beatmaps[i].DiffName + "]");
-                }
-
-                curr++;
-
-                Beatmapsets.Add(bs);
-                System.Threading.Thread.Sleep(10);
-            }
-
-            List<Score> Scores = new List<Score>();
-
-            curr = 1;
-
-            // Get the ranked score for each user from each beatmap
-            foreach (var beatmapset in Beatmapsets)
+            while (gameMode == -1)
             {
-                Score highestScore = new Score();
+                Console.Write("Insert gamemode: ");
 
-                foreach (var beatmap in beatmapset.Beatmaps)
+                int num = 0;
+
+                if(!int.TryParse(Console.ReadLine(), out num))
                 {
-                    if (beatmap.Approved != RankedStatus.Ranked || beatmap.Mode != GameMode.Osu)
-                    {
-                        continue;
-                    }
-                    
-                    Console.Write("Currently checking " + "(" + curr + "/" + files.Length + ") " + beatmapset.Artist + " - " + beatmapset.Title + " (" + beatmapset.Creator + ") [" + beatmap.DiffName + "] ");
-
-                    Score s = await Score.InstantiateScoreAsync(client, u.UserID.ToString(), beatmap.BeatmapID, apikey);
-
-                    if (s.ScoreID > 0 && s.RankedScore > highestScore.RankedScore)
-                    {
-                        Console.WriteLine(u.Username + " " + s.ScoreID + " " + s.RankedScore + " " + s.Date.ToString());
-                        highestScore = s;
-                    }
-                    else
-                    {
-                        Console.WriteLine("No valid score");
-                    }
-
-                    System.Threading.Thread.Sleep(10);
+                    Console.WriteLine("Please insert valid number");
+                    gameMode = -1;
+                }
+                else
+                {
+                    gameMode = num;
                 }
 
-                if (highestScore.ScoreID > 0)
-                {
-                    Scores.Add(highestScore);
-                }
+            }
 
+
+            /////////////////////////////////////////////////////////
+
+            // Read in all of the beatmaps from the file
+
+            //var input = System.IO.File.ReadAllText("input.txt");
+
+            //var maps = input.Split(','); 
+
+            //List<bm> bmlist = new List<bm>();
+            //int count = maps.Length;
+            //foreach (var item in maps)
+            //{
+            //    Console.WriteLine("Maps left to check: " + count);
+            //    string responseString = await client.GetStringAsync(client.BaseAddress + "get_beatmaps?" + "k=" + apikey + "&b=" + item);
+
+            //    JArray beatmapset = JArray.Parse(responseString);
+
+            //    if ((int)beatmapset[0]["approved"] == 1)
+            //    {
+            //        bmlist.Add(new bm((int)beatmapset[0]["beatmapset_id"], (int)beatmapset[0]["beatmap_id"], (int)beatmapset[0]["mode"]));
+            //    }
+
+            //    System.Threading.Thread.Sleep(15);
+
+            //    count--;
+            //}
+
+            //TextWriter textWriter = new StreamWriter(u.Username + ".csv");
+            //var ucsv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
+
+            //ucsv.WriteRecords(bmlist);
+            //ucsv.Flush();
+            //textWriter.Close();
+
+
+            var textReader = new StreamReader("beatmaps.csv");
+            var csv = new CsvReader(textReader, CultureInfo.InvariantCulture);
+            var Beatmapsets = csv.GetRecords<bm>();
+            List<bm> bmlist = Beatmapsets.ToList();
+            List<Score> Scores = new List<Score>();
+            int curr = 1;
+            // Get the ranked score for each user from each beatmap
+
+            foreach (var beatmap in bmlist)
+            {
+                Console.WriteLine("Currently checking: " + curr + "/" + bmlist.Count());
+                if (beatmap.mode == 0 || beatmap.mode == gameMode)
+                {
+                    Scores.AddRange(await Score.InstantiateScoresAsync(client, u.UserID.ToString(), beatmap.mapset, beatmap.map, gameMode, apikey));
+                    System.Threading.Thread.Sleep(15);
+                }
                 curr++;
             }
+
+
+            //foreach (var beatmapset in Beatmapsets)
+            //{
+            //    Score highestScore = new Score();
+
+            //    foreach (var beatmap in beatmapset.Beatmaps)
+            //    {
+            //        if (beatmap.Approved != RankedStatus.Ranked || beatmap.Mode != GameMode.Osu)
+            //        {
+            //            continue;
+            //        }
+
+            //        Console.Write("Currently checking " + "(" + curr + "/" + files.Length + ") " + beatmapset.Artist + " - " + beatmapset.Title + " (" + beatmapset.Creator + ") [" + beatmap.DiffName + "] ");
+
+            //        Score s = await Score.InstantiateScoreAsync(client, u.UserID.ToString(), beatmap.BeatmapID, apikey);
+
+            //        if (s.ScoreID > 0 && s.RankedScore > highestScore.RankedScore)
+            //        {
+            //            Console.WriteLine(u.Username + " " + s.ScoreID + " " + s.RankedScore + " " + s.Date.ToString());
+            //            highestScore = s;
+            //        }
+            //        else
+            //        {
+            //            Console.WriteLine("No valid score");
+            //        }
+
+            //        System.Threading.Thread.Sleep(10);
+            //    }
+
+            //    if (highestScore.ScoreID > 0)
+            //    {
+            //        Scores.Add(highestScore);
+            //    }
+
+            //    curr++;
+            //}
 
             TextWriter textWriter = new StreamWriter(u.Username + ".csv");
-            var csv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
+            var ucsv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
 
-            csv.WriteRecords(Scores);
-            csv.Flush();
+            ucsv.WriteRecords(Scores);
+            ucsv.Flush();
             textWriter.Close();
         }
     }

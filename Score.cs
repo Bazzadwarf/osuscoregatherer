@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 
@@ -7,33 +8,54 @@ namespace osuscoregatherer
 {
     class Score
     {
-        public static async System.Threading.Tasks.Task<Score> InstantiateScoreAsync(HttpClient httpClient, string user, int beatmapid, string apikey)
+        //public static async System.Threading.Tasks.Task<Score> InstantiateScoreAsync(HttpClient httpClient, string user, int beatmapid, string apikey)
+        //{
+        //    String responseString = await httpClient.GetStringAsync(httpClient.BaseAddress + "get_scores?u=" + user + "&b=" + beatmapid + "&k=" + apikey);
+        //    //responseString = responseString.Substring(1, responseString.Length - 2);
+
+        //    return new Score(responseString);
+        //}
+
+        public static async System.Threading.Tasks.Task<List<Score>> InstantiateScoresAsync(HttpClient httpClient, string user, int beatmapsetid, int beatmapid, int gameMode, string apikey)
         {
-            String responseString = await httpClient.GetStringAsync(httpClient.BaseAddress + "get_scores?u=" + user + "&b=" + beatmapid + "&k=" + apikey);
-            //responseString = responseString.Substring(1, responseString.Length - 2);
+            List<Score> scores = new List<Score>();
+            
+            String responseString = await httpClient.GetStringAsync(httpClient.BaseAddress + "get_scores?u=" + user + "&b=" + beatmapid + "&m=" + gameMode + "&k=" + apikey);
 
-            return new Score(responseString);
-        }
-
-        public Score()
-        {
-
-        }
-
-        public Score(string json)
-        {
-            JArray array = JArray.Parse(json);
+            JArray array = JArray.Parse(responseString);
 
             foreach (var item in array)
             {
-                if (DateTime.Compare(DateTime.Parse((string)item["date"]), t2: new DateTime(2012, 07, 25)) < 0)
-                {
-                    ConvertJsonToData(item);
-                    return;                
-                }
+                scores.Add(new Score(item, beatmapsetid, beatmapid));
             }
+
+            return scores;
         }
 
+        //public Score(string json)
+        //{
+        //    JArray array = JArray.Parse(json);
+
+        //    foreach (var item in array)
+        //    {
+        //        if (DateTime.Compare(DateTime.Parse((string)item["date"]), t2: new DateTime(2012, 07, 25)) < 0)
+        //        {
+        //            ConvertJsonToData(item);
+        //            return;                
+        //        }
+        //    }
+        //}
+
+        public Score(JToken json, int beatmapsetid, int beatmapid)
+        { 
+            ConvertJsonToData(json);
+            Beatmapset = beatmapsetid;
+            Beatmap = beatmapid;
+            return;
+        }
+
+        private int beatmapset;
+        private int beatmap;
         private ulong score_id;
         private ulong score;
         private string username;
@@ -51,6 +73,8 @@ namespace osuscoregatherer
         private float pp;
         private bool replay_available;
 
+        public int Beatmapset { get => beatmapset; set => beatmapset = value; }
+        public int Beatmap { get => beatmap; set => beatmap = value; }
         public ulong ScoreID { get => score_id; set => score_id = value; }
         public ulong RankedScore { get => score; set => score = value; }
         public string Username { get => username; set => username = value; }
